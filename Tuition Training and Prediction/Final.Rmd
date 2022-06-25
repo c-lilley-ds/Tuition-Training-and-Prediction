@@ -1,0 +1,652 @@
+---
+title: "Predicting Tuition"
+author: "Chris Lilley"
+date: "11/11/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r , include=FALSE, echo=FALSE}
+library(tidyverse)
+```
+```{r training data, include=FALSE, echo=FALSE}
+training_data <- read_csv("https://www.dropbox.com/s/daxlgx3ckmofnpj/university_cost_training.csv?dl=1")
+```
+```{r prediction data import, include=FALSE, echo=FALSE}
+prediction_data <- read_csv("https://www.dropbox.com/s/oromn0mtl6cietc/university_cost_prediction.csv?dl=1")
+```
+
+```{r data cleaning, include=FALSE, echo=FALSE}
+str(training_data)
+
+#training_data$FAMINC[training_data$FAMINC == "PrivacySuppressed"] <- NA
+training_data[training_data == "PrivacySuppressed"] <- NA
+
+```
+
+```{r, include=FALSE, echo=FALSE}
+# Change Open admission Policy to 1= Y 0 =N
+
+training_data$OPENADMP[training_data$OPENADMP == 2] <- 0
+```
+
+
+```{r numericizing data, echo=FALSE}
+training_data$FAMINC <- as.numeric(training_data$FAMINC)
+training_data$MD_FAMINC <- as.numeric(training_data$MD_FAMINC)
+training_data$FEMALE <- as.numeric(training_data$FEMALE)
+training_data$PAR_ED_PCT_MS <- as.numeric(training_data$PAR_ED_PCT_MS)
+training_data$PAR_ED_PCT_HS <- as.numeric(training_data$PAR_ED_PCT_HS)
+training_data$PAR_ED_PCT_PS <- as.numeric(training_data$PAR_ED_PCT_PS)
+training_data$APPL_SCH_PCT_GE2<- as.numeric(training_data$APPL_SCH_PCT_GE2)
+training_data$APPL_SCH_PCT_GE3 <- as.numeric(training_data$APPL_SCH_PCT_GE3)
+training_data$APPL_SCH_PCT_GE4 <- as.numeric(training_data$APPL_SCH_PCT_GE4)
+training_data$APPL_SCH_PCT_GE5 <- as.numeric(training_data$APPL_SCH_PCT_GE5)
+data.class(training_data$FEMALE)
+
+```
+``` {r replacing NA with Median, echo=FALSE}
+str(training_data)
+sum(is.na(training_data$STABBR))
+sum(is.na(training_data$MAIN))
+sum(is.na(training_data$NUMBRANCH))
+sum(is.na(training_data$PREDDEG))
+sum(is.na(training_data$HIGHDEG))
+sum(is.na(training_data$CONTROL))
+sum(is.na(training_data$ADM_RATE))
+sum(is.na(training_data$SAT_AVG))
+sum(is.na(training_data$PCIP01))
+sum(is.na(training_data$PCIP03))
+sum(is.na(training_data$PCIP04))
+sum(is.na(training_data$PCIP05))
+sum(is.na(training_data$PCIP09))
+sum(is.na(training_data$PCIP10))
+sum(is.na(training_data$PCIP11))
+sum(is.na(training_data$PCIP12))
+sum(is.na(training_data$PCIP13))
+sum(is.na(training_data$PCIP14))
+sum(is.na(training_data$PCIP15))
+sum(is.na(training_data$PCIP16))
+sum(is.na(training_data$PCIP19))
+sum(is.na(training_data$PCIP22))
+sum(is.na(training_data$PCIP23))
+sum(is.na(training_data$PCIP24))
+sum(is.na(training_data$PCIP25))
+sum(is.na(training_data$PCIP26))
+sum(is.na(training_data$PCIP27))
+sum(is.na(training_data$PCIP29))
+sum(is.na(training_data$PCIP30))
+sum(is.na(training_data$PCIP31))
+sum(is.na(training_data$PCIP38))
+sum(is.na(training_data$PCIP39))
+sum(is.na(training_data$PCIP40))
+sum(is.na(training_data$PCIP41))
+sum(is.na(training_data$PCIP42))
+sum(is.na(training_data$PCIP43))
+sum(is.na(training_data$PCIP44))
+sum(is.na(training_data$PCIP45))
+sum(is.na(training_data$PCIP46))
+sum(is.na(training_data$PCIP47))
+sum(is.na(training_data$PCIP48))
+sum(is.na(training_data$PCIP49))
+sum(is.na(training_data$PCIP50))
+sum(is.na(training_data$PCIP51))
+sum(is.na(training_data$PCIP52))
+sum(is.na(training_data$PCIP54))
+sum(is.na(training_data$DISTANCEONLY))
+sum(is.na(training_data$UGDS_WHITE))
+sum(is.na(training_data$UGDS_BLACK))
+sum(is.na(training_data$UGDS_HISP))
+sum(is.na(training_data$UGDS_ASIAN))
+sum(is.na(training_data$UGDS_AIAN))
+sum(is.na(training_data$UGDS_NHPI))
+sum(is.na(training_data$UGDS_2MOR))
+sum(is.na(training_data$UGDS_NRA))
+sum(is.na(training_data$UGDS_UNKN))
+sum(is.na(training_data$PPTUG_EF))
+sum(is.na(training_data$AVGFACSAL))
+sum(is.na(training_data$PFTFAC))
+sum(is.na(training_data$PCTPELL))
+sum(is.na(training_data$PFTFTUG1_EF))
+sum(is.na(training_data$PCTFLOAN ))
+sum(is.na(training_data$UG25ABV))
+sum(is.na(training_data$PAR_ED_PCT_1STGEN))
+sum(is.na(training_data$PAR_ED_PCT_MS))
+sum(is.na(training_data$PAR_ED_PCT_HS))
+sum(is.na(training_data$PAR_ED_PCT_PS))
+sum(is.na(training_data$APPL_SCH_PCT_GE2))
+sum(is.na(training_data$APPL_SCH_PCT_GE3))
+sum(is.na(training_data$APPL_SCH_PCT_GE4))
+sum(is.na(training_data$APPL_SCH_PCT_GE5))
+sum(is.na(training_data$DEP_INC_AVG))
+sum(is.na(training_data$IND_INC_AVG))
+sum(is.na(training_data$AGE_ENTRY))
+sum(is.na(training_data$FEMALE))
+sum(is.na(training_data$MARRIED))
+sum(is.na(training_data$DEPENDENT))
+sum(is.na(training_data$VETERAN))
+sum(is.na(training_data$FAMINC))
+sum(is.na(training_data$MD_FAMINC))
+sum(is.na(training_data$ICLEVEL))
+sum(is.na(training_data$OPENADMP))
+sum(is.na(training_data$UGDS))
+sum(is.na(training_data$UGNONDS))
+sum(is.na(training_data$GRADS))
+sum(is.na(training_data$FEMALE_DUMMY))
+sum(is.na(training_data$APPL_SCH_PCT_GE1))
+sum(is.na(training_data$CONTROL))
+
+
+
+
+
+training_data$FEMALE<- replace_na(training_data$FEMALE, median(training_data$FAMINC, na.rm = TRUE))
+
+sum(is.na(training_data$STABBR))
+```
+```{r training data import, include=FALSE, echo=FALSE}
+str(training_data)
+
+training_data$ADM_RATE<- replace_na(training_data$ADM_RATE, mean(training_data$ADM_RATE, na.rm = TRUE))
+training_data$SAT_AVG<- replace_na(training_data$SAT_AVG, mean(training_data$SAT_AVG, na.rm = TRUE))
+training_data$SAT_AVG<- replace_na(training_data$SAT_AVG, mean(training_data$SAT_AVG, na.rm = TRUE))
+
+#NO NA 
+#NO NA  training_data$PCIP01<- replace_na(training_data$PCIP01, mean(training_data$PCIP01, na.rm = TRUE))
+#NO NA training_data$PCIP03<- replace_na(training_data$PCIP03, mean(training_data$PCIP03, na.rm = TRUE))
+#NO NA training_data$PCIP04<- replace_na(training_data$PCIP04, mean(training_data$PCIP04, na.rm = TRUE))
+#NO NA training_data$PCIP05<- replace_na(training_data$PCIP05, mean(training_data$PCIP05, na.rm = TRUE))
+#NO NA training_data$PCIP09<- replace_na(training_data$PCIP09, mean(training_data$PCIP09, na.rm = TRUE))
+#NO NA training_data$PCIP10<- replace_na(training_data$PCIP10, mean(training_data$PCIP10, na.rm = TRUE))
+#NO NA training_data$PCIP11<- replace_na(training_data$PCIP11, mean(training_data$PCIP11, na.rm = TRUE))
+#NO NA training_data$PCIP12<- replace_na(training_data$PCIP12, mean(training_data$PCIP12, na.rm = TRUE))
+#NO NA training_data$PCIP13<- replace_na(training_data$PCIP13, mean(training_data$PCIP13, na.rm = TRUE))
+#NO NA training_data$PCIP14<- replace_na(training_data$PCIP14, mean(training_data$PCIP14, na.rm = TRUE))
+#NO NA training_data$PCIP15<- replace_na(training_data$PCIP15, mean(training_data$PCIP15, na.rm = TRUE))
+#NO NA training_data$PCIP16<- replace_na(training_data$PCIP16, mean(training_data$PCIP16, na.rm = TRUE))
+#NO NA training_data$PCIP19<- replace_na(training_data$PCIP19, mean(training_data$PCIP19, na.rm = TRUE))
+#NO NA training_data$PCIP22<- replace_na(training_data$PCIP22, mean(training_data$PCIP22, na.rm = TRUE))
+#NO NA training_data$PCIP23<- replace_na(training_data$PCIP23, mean(training_data$PCIP23, na.rm = TRUE))
+#NO NA training_data$PCIP24<- replace_na(training_data$PCIP24, mean(training_data$PCIP24, na.rm = TRUE))
+#NO NA training_data$PCIP25<- replace_na(training_data$PCIP25, mean(training_data$PCIP25, na.rm = TRUE))
+#NO NA training_data$PCIP26<- replace_na(training_data$PCIP26, mean(training_data$PCIP26, na.rm = TRUE))
+#NO NA training_data$PCIP27<- replace_na(training_data$PCIP27, mean(training_data$PCIP27, na.rm = TRUE))
+#NO NA training_data$PCIP29<- replace_na(training_data$PCIP29, mean(training_data$PCIP29, na.rm = TRUE))
+#NO NA training_data$PCIP30<- replace_na(training_data$PCIP30, mean(training_data$PCIP30, na.rm = TRUE))
+#NO NA training_data$PCIP31<- replace_na(training_data$PCIP31, mean(training_data$PCIP31, na.rm = TRUE))
+#NO NA training_data$PCIP38<- replace_na(training_data$PCIP38, mean(training_data$PCIP38, na.rm = TRUE))
+#NO NA training_data$PCIP39<- replace_na(training_data$PCIP39, mean(training_data$PCIP39, na.rm = TRUE))
+#NO NA training_data$PCIP40<- replace_na(training_data$PCIP40, mean(training_data$PCIP40, na.rm = TRUE))
+#NO NA training_data$PCIP41<- replace_na(training_data$PCIP41, mean(training_data$PCIP41, na.rm = TRUE))
+#NO NA training_data$PCIP42<- replace_na(training_data$PCIP42, mean(training_data$PCIP42, na.rm = TRUE))
+#NO NA training_data$PCIP43<- replace_na(training_data$PCIP43, mean(training_data$PCIP43, na.rm = TRUE))
+#NO NA training_data$PCIP44<- replace_na(training_data$PCIP44, mean(training_data$PCIP44, na.rm = TRUE))
+#NO NA training_data$PCIP45<- replace_na(training_data$PCIP45, mean(training_data$PCIP45, na.rm = TRUE))
+#NO NA training_data$PCIP46<- replace_na(training_data$PCIP46, mean(training_data$PCIP46, na.rm = TRUE))
+#NO NA training_data$PCIP47<- replace_na(training_data$PCIP47, mean(training_data$PCIP47, na.rm = TRUE))
+#NO NA training_data$PCIP48<- replace_na(training_data$PCIP48, mean(training_data$PCIP48, na.rm = TRUE))
+#NO NA training_data$PCIP49<- replace_na(training_data$PCIP49, mean(training_data$PCIP49, na.rm = TRUE))
+#NO NA training_data$PCIP50<- replace_na(training_data$PCIP50, mean(training_data$PCIP50, na.rm = TRUE))
+#NO NA training_data$PCIP51<- replace_na(training_data$PCIP51, mean(training_data$PCIP51, na.rm = TRUE))
+#NO NA training_data$PCIP52<- replace_na(training_data$PCIP52, mean(training_data$PCIP52, na.rm = TRUE))
+#NO NA training_data$PCIP54<- replace_na(training_data$PCIP54, mean(training_data$PCIP54, na.rm = TRUE))
+#NO NA training_data$DISTANCEONLY <- replace_na(training_data$DISTANCEONLY , mean(training_data$DISTANCEONLY , na.rm = TRUE))
+#NO NA training_data$UGDS_WHITE<- replace_na(training_data$UGDS_WHITE, mean(training_data$UGDS_WHITE, na.rm = TRUE))
+#NO NA training_data$UGDS_BLACK<- replace_na(training_data$UGDS_BLACK, mean(training_data$UGDS_BLACK, na.rm = TRUE))
+#NO NA training_data$UGDS_HISP<- replace_na(training_data$UGDS_HISP, mean(training_data$UGDS_HISP, na.rm = TRUE))
+#NO NA training_data$UGDS_ASIAN<- replace_na(training_data$UGDS_ASIAN, mean(training_data$UGDS_ASIAN, na.rm = TRUE))
+#NO NA training_data$UGDS_AIAN<- replace_na(training_data$UGDS_AIAN, mean(training_data$UGDS_AIAN, na.rm = TRUE))
+#NO NA training_data$UGDS_NHPI<- replace_na(training_data$UGDS_NHPI, mean(training_data$UGDS_NHPI, na.rm = TRUE))
+#NO NA training_data$UGDS_2MOR<- replace_na(training_data$UGDS_2MOR, mean(training_data$UGDS_2MOR, na.rm = TRUE))
+#NO NA training_data$UGDS_NRA<- replace_na(training_data$UGDS_NRA, mean(training_data$UGDS_NRA, na.rm = TRUE))
+#NO NA training_data$UGDS_UNKN<- replace_na(training_data$UGDS_UNKN, mean(training_data$UGDS_UNKN, na.rm = TRUE))
+#NO NA training_data$PPTUG_EF<- replace_na(training_data$PPTUG_EF, mean(training_data$PPTUG_EF, na.rm = TRUE))
+training_data$AVGFACSAL<- replace_na(training_data$AVGFACSAL, mean(training_data$AVGFACSAL, na.rm = TRUE))
+training_data$PFTFAC<- replace_na(training_data$PFTFAC, mean(training_data$PFTFAC, na.rm = TRUE))
+#NO NA training_data$PCTPELL<- replace_na(training_data$PCTPELL, mean(training_data$PCTPELL, na.rm = TRUE))
+training_data$PFTFTUG1_EF<- replace_na(training_data$PFTFTUG1_EF, mean(training_data$PFTFTUG1_EF, na.rm = TRUE))
+#NO NA training_data$PCTFLOAN<- replace_na(training_data$PCTFLOAN, mean(training_data$PCTFLOAN, na.rm = TRUE))
+training_data$UG25ABV<- replace_na(training_data$UG25ABV, mean(training_data$UG25ABV, na.rm = TRUE))
+training_data$PAR_ED_PCT_1STGEN<- replace_na(training_data$PAR_ED_PCT_1STGEN, mean(training_data$PAR_ED_PCT_1STGEN, na.rm = TRUE))
+training_data$PAR_ED_PCT_MS<- replace_na(training_data$PAR_ED_PCT_MS, mean(training_data$PAR_ED_PCT_MS, na.rm = TRUE))
+training_data$PAR_ED_PCT_HS<- replace_na(training_data$PAR_ED_PCT_HS, mean(training_data$PAR_ED_PCT_HS, na.rm = TRUE))
+training_data$PAR_ED_PCT_PS<- replace_na(training_data$PAR_ED_PCT_PS, mean(training_data$PAR_ED_PCT_PS, na.rm = TRUE))
+training_data$APPL_SCH_PCT_GE2<- replace_na(training_data$APPL_SCH_PCT_GE2, mean(training_data$APPL_SCH_PCT_GE2, na.rm = TRUE))
+training_data$APPL_SCH_PCT_GE3<- replace_na(training_data$APPL_SCH_PCT_GE3, mean(training_data$APPL_SCH_PCT_GE3, na.rm = TRUE))
+training_data$APPL_SCH_PCT_GE4<- replace_na(training_data$APPL_SCH_PCT_GE4, mean(training_data$APPL_SCH_PCT_GE4, na.rm = TRUE))
+training_data$APPL_SCH_PCT_GE5<- replace_na(training_data$APPL_SCH_PCT_GE5, mean(training_data$APPL_SCH_PCT_GE5, na.rm = TRUE))
+training_data$DEP_INC_AVG<- replace_na(training_data$DEP_INC_AVG, mean(training_data$DEP_INC_AVG, na.rm = TRUE))
+training_data$IND_INC_AVG<- replace_na(training_data$IND_INC_AVG, mean(training_data$IND_INC_AVG, na.rm = TRUE))
+training_data$AGE_ENTRY<- replace_na(training_data$AGE_ENTRY, mean(training_data$AGE_ENTRY, na.rm = TRUE))
+#NO NA training_data$FEMALE<- replace_na(training_data$FEMALE, mean(training_data$FEMALE, na.rm = TRUE))
+training_data$MARRIED<- replace_na(training_data$MARRIED, mean(training_data$MARRIED, na.rm = TRUE))
+training_data$DEPENDENT<- replace_na(training_data$DEPENDENT, mean(training_data$DEPENDENT, na.rm = TRUE))
+training_data$VETERAN<- replace_na(training_data$VETERAN, mean(training_data$VETERAN, na.rm = TRUE))
+training_data$FAMINC<- replace_na(training_data$FAMINC, mean(training_data$FAMINC, na.rm = TRUE))
+training_data$MD_FAMINC<- replace_na(training_data$MD_FAMINC, mean(training_data$MD_FAMINC, na.rm = TRUE))
+# NO NAtraining_data$ICLEVEL<- replace_na(training_data$ICLEVEL, mean(training_data$ICLEVEL, na.rm = TRUE))
+# NO NA training_data$OPENADMP<- replace_na(training_data$OPENADMP, mean(training_data$OPENADMP, na.rm = TRUE))
+# NO NAtraining_data$UGDS<- replace_na(training_data$UGDS, mean(training_data$UGDS, na.rm = TRUE))
+training_data$UGNONDS<- replace_na(training_data$UGNONDS, mean(training_data$UGNONDS, na.rm = TRUE))
+training_data$GRADS<- replace_na(training_data$GRADS, mean(training_data$GRADS, na.rm = TRUE))
+training_data$MD_FAMINC<- replace_na(training_data$MD_FAMINC, mean(training_data$MD_FAMINC, na.rm = TRUE))
+```
+
+
+```{r, include=FALSE, echo=FALSE}
+ training_data$ADM_RATE[training_data$OPENADMP == 1] <- 1.000
+training_data$ADM_RATE<- replace_na(training_data$ADM_RATE, mean(training_data$ADM_RATE, na.rm = TRUE))
+training_data$FAMINC<- replace_na(training_data$FAMINC, mean(training_data$FAMINC, na.rm = TRUE))
+training_data$MD_FAMINC<- replace_na(training_data$MD_FAMINC, mean(training_data$MD_FAMINC, na.rm = TRUE))
+```
+
+```{r plots, include=FALSE, echo=FALSE}
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$MAIN,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+plot(training_data$STABBR,training_data$AVG_COST_ATTEND)
+
+plot(training_data$ADM_RATE,training_data$AVG_COST_ATTEND)
+
+training_data$AVG_COST_ATTEND
+
+
+```
+
+
+
+```{r models, echo=FALSE}
+
+# Model of Cost to attend by admission
+adminrate_lm<- lm(AVG_COST_ATTEND~ADM_RATE, data = training_data)
+summary(adminrate_lm)
+# Model of Cost to attend by admission and fam income
+adminrate_FAMINC_lm<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+FAMINC)
+summary(adminrate_FAMINC_lm)
+adminrate_FAMINC_lm_Cntrol<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+FAMINC+CONTROL)
+summary(adminrate_FAMINC_lm_Cntrol)
+adminrate_MD_FAMINC_lm_Cntrol<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+MD_FAMINC+CONTROL)
+summary(adminrate_MD_FAMINC_lm_Cntrol)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_BLACK<- training_data %>% 
+  #lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_BLACK)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_BLACK)
+#training_data$UGDS_BLACK
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_HISP<- training_data %>% 
+ # lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_HISP)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_HISP)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_ASIAN<- training_data %>% 
+#  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_ASIAN)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_ASIAN)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_AIAN<- training_data %>% 
+ # lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_AIAN)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_AIAN)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_NHPI<- training_data %>% 
+ # lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_NHPI)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_NHPI)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_2MOR<- training_data %>% 
+#  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_2MOR)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_2MOR)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE)
+training_data$FEMALE_DUMMY <- ifelse(training_data$FEMALE > .5, 0,1)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_DUMMY<- training_data %>% 
+  #lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE_DUMMY#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_DUMMY)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP01<- training_data %>% 
+  lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP01)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP03)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP03<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP03#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP03)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP04<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP04#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP04)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP05<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP05#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP05)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP09<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP09#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP09)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP10<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP10#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP10)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP11<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP11#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP11)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP13<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP13#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP13)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP14<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP14)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP14)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP15<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP15#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP15)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP16<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP16#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP16)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP19<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP19#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP19)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP22<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP22#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP22)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP23<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP23#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP23)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP24<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP24#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP24)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP25<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP25#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP25)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP26<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP26#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP26)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP27<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP27#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP27)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP29<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP29#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP29)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP30<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP30#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP30)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP31<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP31#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP31)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP38<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP38#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP38)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP39<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP39#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP39)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP40<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP40#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP40)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP41<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP41#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP41)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP42<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP42#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP42)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP43<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP43#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP43)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP44<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP44#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP44)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP45<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP45#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP45)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP46<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP46#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP46)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP47<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP47#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP47)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP48<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP48#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP48)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP49<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP49)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP49)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP50<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP50#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP50)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP51<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP51#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP51)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP52<- training_data %>% 
+ # lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP52#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP52)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP54<- training_data %>% 
+#  lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP54#)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP54)
+
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_MS<- #training_data %>% 
+#lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_MS)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_MS)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_PS<- training_data %>% 
+#lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_PS)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_PS)
+
+
+
+training_data <-
+  mutate(training_data, APPL_SCH_PCT_GE1 = 1-APPL_SCH_PCT_GE2) 
+ 
+         
+
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE2<- training_data %>% 
+#lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE2)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE2)
+#adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE3<- training_data %>% 
+#lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE3)
+#summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE3) 
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4)
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE5<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+APPL_SCH_PCT_GE5)
+summary(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE5)
+
+adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR))
+summary(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR)
+adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG))
+summary(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG)
+adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG)+as.factor(PREDDEG))
+summary(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG)
+
+
+adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG)+as.factor(PREDDEG)+PPTUG_EF)
+summary(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF)
+
+
+adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF_AVGFACSAL<- training_data %>% 
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_NRA+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG)+as.factor(PREDDEG)+PPTUG_EF+AVGFACSAL)
+summary(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF_AVGFACSAL)
+
+VIF(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF_AVGFACSAL)
+
+
+
+
+
+
+
+
+# Model of Cost to attend by admission and fam income and SAT AVERAGE
+
+adminrate_FAMINC_SATlm<- lm(AVG_COST_ATTEND~ADM_RATE+FAMINC+SAT_AVG, data=training_data)
+summary(adminrate_FAMINC_SATlm)
+
+# Model of Cost to attend by all
+
+
+
+```
+
+
+
+
+
+```{r, include=FALSE, echo=FALSE}
+
+
+adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4$fitted
+fitted(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4)
+plot(prediction_data$AVG_COST_ATTEND,adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4$fitted)
+predict(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4,list(AVG_COST_ATTEND))
+
+new_data_test <- tibble(training_data$ADM_RATE,training_data$FAMINC,training_data$CONTROL,training_data$PCTFLOAN,training_data$PCTPELL,training_data$UGDS_WHITE,training_data$FEMALE,training_data$PCIP12,training_data$PAR_ED_PCT_HS,training_data$APPL_SCH_PCT_GE4)
+
+
+
+
+pred <- predict.lm(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4, new_data_test)
+prediction_data %>% 
+mutate(cost=0)
+predict.lm(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF_AVGFACSAL, prediction_data)
+
+
+fitted(adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG_PPTUG_EF_AVGFACSAL)
+predict.lm(adminrate_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4, newdata=AVG_COST_ATTEND)
+```
+
+```{r find missing Female, include=FALSE, echo=FALSE}
+select(training_data, FEMALE)
+summary(training_data$FEMALE)
+
+training_data$FEMALE<- replace_na(training_data$FEMALE, median(training_data$FAMINC, na.rm = TRUE))
+
+```
+
+Notes: 
+SAT Average is almost 2/3 NA 
+maybe schools with open admission do not look at SAT
+
+Should Privacy Suppressed be NA?
+Number?
+Cannot be used as numerical regression?
+
+Make 2 of every model with mean FAMINC and FAMINC
+
+linear model adding in FAMINC helps but addressing NAS does not?
+
+best so far 
+10090
+9899 with 25051
+9887 with 25203
+adminrate_lm
+9113 on 25202 degrees of freedom
+adminrate_FAMINC_lm
+8487 on 20383 degrees of freedom
+8432 on 20382 degrees of freedom
+
+8075 on 25201 degrees of freedom
+lm(formula= AVG_COST_ATTEND~ADM_RATE+FAMINC+CONTROL)
+
+
+
+7822 on 25199 degrees of freedom
+lm(formula= AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL)
+7700 on 25198 degrees of freedom
+lm(formula = AVG_COST_ATTEND ~ ADM_RATE + CONTROL + MD_FAMINC + 
+    PCTFLOAN + PCTPELL + UGDS_WHITE
+
+
+
+
+
+6831 on 17590 degrees of freedom
+lm(formula = AVG_COST_ATTEND ~ ADM_RATE + CONTROL + MD_FAMINC + 
+    PCTFLOAN + PCTPELL + UGDS_WHITE + FEMALE, data = .)
+
+
+
+6824 on 17589 degrees of freedom
+lm(AVG_COST_ATTEND ~ ADM_RATE + CONTROL + MD_FAMINC + 
+    PCTFLOAN + PCTPELL + UGDS_WHITE + FEMALE + PCIP01)
+
+6823 on 17589 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP03)
+6799 on 17589 degrees of freedom
+formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP04
+6798 on 17589 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP05)
+6594 on 17589 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12)
+6126 on 13949 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS)
+5489 on 12577 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4)
+
+
+5396 on 12521 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR))
+
+5361 on 12517
+AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG))
+AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG))
+
+
+5351 on 12515
+adminrate_MD_FAMINC_lm_Cntrol_PCTFLOAN_PCTPELL_UGDS_WHITE_FEMALE_PCIP12_PAR_ED_PCT_HS_APPL_SCH_PCT_GE4_STABBR_HIGHDEG_PREDDEG
+5344 on 12514 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG)+as.factor(PREDDEG)+PPTUG_EF)
+
+5322 on 9930 degrees of freedom
+lm(formula=AVG_COST_ATTEND~ADM_RATE+CONTROL+MD_FAMINC+PCTFLOAN+PCTPELL+UGDS_WHITE+FEMALE+PCIP12+PAR_ED_PCT_HS+APPL_SCH_PCT_GE4+as.factor(STABBR)+as.factor(HIGHDEG)+as.factor(PREDDEG)+PPTUG_EF+AVGFACSAL)
